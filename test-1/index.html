@@ -191,7 +191,6 @@
         .feedback-correct { background: rgba(16, 185, 129, 0.9); }
         .feedback-incorrect { background: rgba(239, 68, 68, 0.9); }
 
-        /* ИСПРАВЛЕНИЕ: Стили для нового конфетти на canvas */
         #confetti-canvas {
             position: fixed;
             top: 0;
@@ -199,8 +198,8 @@
             width: 100%;
             height: 100%;
             z-index: 3000;
-            pointer-events: none; /* Canvas не должен мешать кликам */
-            display: none; /* Скрыт по умолчанию */
+            pointer-events: none;
+            display: none;
         }
 
         @media (max-width: 600px) {
@@ -214,7 +213,6 @@
     </style>
 </head>
 <body>
-    <!-- ИСПРАВЛЕНИЕ: Добавлен canvas для конфетти -->
     <canvas id="confetti-canvas"></canvas>
 
     <div id="feedbackOverlay">
@@ -242,13 +240,14 @@
             <div id="welcomeScreen" class="welcome-screen">
                 <h2 class="welcome-subtitle">Тест к первому уроку</h2>
                 <h1 class="welcome-title">Безопасность и подготовка рабочего пространства для криптоопераций</h1>
+                <!-- ИЗМЕНЕНИЕ: Обновленный текст описания -->
                 <ul class="info-list">
-                    <li>Вас ждет тест из 10 вопросов</li>
-                    <li>Тест на время: вам дается 10 минут на прохождение теста</li>
-                    <li>Каждый вопрос в тесте включает 4 ответа</li>
-                    <li>В каждом вопросе может быть один или несколько правильных ответов</li>
-                    <li>За каждый верно решенный вопрос можно набрать 1 балл</li>
-                    <li>Всего можно набрать 10 баллов</li>
+                    <li>Вас ждет тест из 10 вопросов.</li>
+                    <li>Тест на время: вам дается 10 минут на прохождение.</li>
+                    <li>В каждом вопросе может быть один или несколько правильных ответов.</li>
+                    <li>За каждый правильно выбранный вариант ответа вы получаете часть от общего балла за вопрос.</li>
+                    <li>За каждый неправильно выбранный вариант балл будет снижаться, чтобы избежать случайных угадываний.</li>
+                    <li>Ваш итоговый результат будет показан в процентах: от 0% до 100%.</li>
                 </ul>
                 <button class="btn" onclick="startTest()">ВПЕРЕД!</button>
             </div>
@@ -394,7 +393,7 @@
         ];
 
         let currentQuestion = 0;
-        let score = 0;
+        let score = 0; // ИЗМЕНЕНИЕ: Теперь это будет дробное число для процентов
         let selectedAnswers = [];
         let answered = false;
         let timeLeft = 600;
@@ -451,7 +450,8 @@
                     dot.classList.add('current');
                 }
                 if (questionResults[index] !== undefined) {
-                    dot.classList.add(questionResults[index] ? 'correct' : 'incorrect');
+                    // ИЗМЕНЕНИЕ: Зеленый, если набрано > 0 очков за вопрос
+                    dot.classList.add(questionResults[index] > 0 ? 'correct' : 'incorrect');
                 }
             });
         }
@@ -528,18 +528,30 @@
             userAnswersHistory[currentQuestion] = [...selectedAnswers];
             const q = questions[currentQuestion];
             
-            const isCorrect = 
-                selectedAnswers.length === q.correct.length &&
-                selectedAnswers.every(ans => q.correct.includes(ans)) &&
-                q.correct.every(cor => selectedAnswers.includes(cor));
+            // --- ИЗМЕНЕНИЕ: Новая логика подсчета очков ---
+            const correctAnswersCount = q.correct.length;
+            const pointsPerCorrect = 1 / correctAnswersCount;
+            let questionScore = 0;
+            let correctSelected = 0;
+            let incorrectSelected = 0;
+
+            selectedAnswers.forEach(selectedIndex => {
+                if (q.correct.includes(selectedIndex)) {
+                    correctSelected++;
+                } else {
+                    incorrectSelected++;
+                }
+            });
+
+            questionScore = (correctSelected * pointsPerCorrect) - (incorrectSelected * pointsPerCorrect);
+            questionScore = Math.max(0, questionScore); // Оценка за вопрос не может быть отрицательной
             
-            if (isCorrect) {
-                score++;
-            }
+            score += questionScore;
+            questionResults[currentQuestion] = questionScore;
+            // --- Конец новой логики ---
             
-            questionResults[currentQuestion] = isCorrect;
-            
-            showFeedback(isCorrect);
+            // Показываем "Верно", только если набрано > 0 очков за вопрос
+            showFeedback(questionScore > 0);
             
             setTimeout(() => {
                 const answerElements = document.querySelectorAll('.answer');
@@ -600,25 +612,29 @@
             const scoreEl = document.getElementById('score');
             const messageElement = document.getElementById('resultMessage');
             
+            // --- ИЗМЕНЕНИЕ: Расчет и отображение процентов ---
+            const finalPercentage = Math.round((score / questions.length) * 100);
+
             if(runAnimation) {
-                let currentScore = 0;
+                let currentPercent = 0;
                 const scoreAnimation = setInterval(() => {
-                    scoreEl.textContent = `${currentScore}/10`;
-                    if (currentScore >= score) {
+                    scoreEl.textContent = `${currentPercent}%`;
+                    if (currentPercent >= finalPercentage) {
                         clearInterval(scoreAnimation);
-                        if (score === 10) launchConfetti();
+                        if (finalPercentage >= 90) launchConfetti(); // Конфетти за 90% и выше
                     }
-                    currentScore++;
-                }, 100);
+                    currentPercent++;
+                }, 20); // Ускорим анимацию для процентов
             } else {
-                scoreEl.textContent = `${score}/10`;
+                scoreEl.textContent = `${finalPercentage}%`;
             }
             
             let message = ''; let className = '';
-            if (score === 10) { message = '🎉 У вас отличное понимание безопасности!'; className = 'excellent'; }
-            else if (score >= 8) { message = '👍 У вас хорошее понимание, однако требуется доработка деталей.'; className = 'good'; }
-            else if (score >= 6) { message = '📚 Необходимо повторное изучение материала.'; className = 'average'; }
+            if (finalPercentage >= 90) { message = '🎉 У вас отличное понимание безопасности!'; className = 'excellent'; }
+            else if (finalPercentage >= 70) { message = '👍 У вас хорошее понимание, однако требуется доработка деталей.'; className = 'good'; }
+            else if (finalPercentage >= 50) { message = '📚 Необходимо повторное изучение материала.'; className = 'average'; }
             else { message = '⚠️ Критически важно пройти урок заново!'; className = 'poor'; }
+            // --- Конец изменений ---
             
             messageElement.textContent = message;
             messageElement.className = 'result-message ' + className;
@@ -666,7 +682,6 @@
             tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';
         }
 
-        // ИСПРАВЛЕНИЕ: Новая функция для конфетти на canvas
         function launchConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
@@ -686,7 +701,7 @@
                     this.y = y;
                     this.size = Math.random() * 7 + 3;
                     this.speedX = Math.random() * 6 - 3;
-                    this.speedY = Math.random() * -15 - 5; // Shoot upwards
+                    this.speedY = Math.random() * -15 - 5;
                     this.color = colors[Math.floor(Math.random() * colors.length)];
                     this.opacity = 1;
                     this.spin = Math.random() * 10;
@@ -716,7 +731,6 @@
                 }
             }
 
-            // Создаем два "салюта" по краям
             createParticles(width * 0.2, height, 100);
             createParticles(width * 0.8, height, 100);
 
@@ -734,7 +748,6 @@
                 if (particles.length > 0) {
                     animationFrameId = requestAnimationFrame(animate);
                 } else {
-                    // Очистка после завершения анимации
                     ctx.clearRect(0, 0, width, height);
                     canvas.style.display = 'none';
                     cancelAnimationFrame(animationFrameId);
@@ -743,7 +756,6 @@
             
             animate();
             
-            // Прячем канвас через 5 секунд в любом случае
             setTimeout(() => {
                  if(animationFrameId) {
                     cancelAnimationFrame(animationFrameId);
@@ -754,7 +766,7 @@
 
         function restartTest() {
             const canvas = document.getElementById('confetti-canvas');
-            canvas.style.display = 'none'; // Убедимся, что канвас скрыт
+            canvas.style.display = 'none';
 
             currentQuestion = 0; score = 0; selectedAnswers = []; answered = false;
             timeLeft = 600; questionResults = []; userAnswersHistory = []; testFinished = false;
