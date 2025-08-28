@@ -1,785 +1,769 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="ru">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.7">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест: Безопасность и подготовка рабочего пространства для криптоопераций</title>
+    <style>
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-top: 100px;
+        }
+        
+        /* Header & Progress */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 15px 20px;
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timer {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timer.warning { color: #f59e0b; }
+        .timer.danger { color: #ef4444; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .progress-container { flex: 1; margin: 0 30px; }
+        .progress-label { font-size: 12px; color: #666; margin-bottom: 5px; }
+        .progress-bar { background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 4px; }
+
+        .question-indicators { display: flex; gap: 5px; margin-top: 8px; }
+        .question-dot {
+            width: 20px; height: 20px; border-radius: 50%; background: #e0e0e0;
+            font-size: 10px; display: flex; align-items: center; justify-content: center;
+            color: #666; font-weight: bold; transition: all 0.3s ease;
+        }
+        .question-indicators.review-mode .question-dot { cursor: pointer; } /* Make dots clickable in review mode */
+        .question-dot.current { background: #667eea; color: white; transform: scale(1.2); }
+        .question-dot.correct { background: #10b981; color: white; }
+        .question-dot.incorrect { background: #ef4444; color: white; }
+
+        /* Card & Transitions */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .card.fade-out {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; border: none; padding: 15px 40px; border-radius: 10px;
+            font-size: 18px; font-weight: bold; cursor: pointer;
+            transition: all 0.3s ease; display: inline-block; margin-top: 20px;
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5); 
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary {
+            background: white; color: #667eea; border: 2px solid #667eea; margin-left: 10px;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #667eea; color: white;
+        }
+
+        /* Screens */
+        .welcome-screen .welcome-subtitle {
+            font-size: 16px;
+            font-weight: 600;
+            color: #9ca3af; /* Gray color */
+            margin-bottom: 8px; /* Space between subtitle and title */
+            text-transform: uppercase;
+        }
+        .welcome-screen .welcome-title { 
+            color: #667eea; 
+            margin-bottom: 30px; 
+            font-size: 32px; /* Increased font size */
+            line-height: 1.3; 
+        }
+        .welcome-screen .info-list { list-style: none; margin: 30px 0; }
+        .welcome-screen .info-list li { padding: 12px 0; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 10px; }
+        .welcome-screen .info-list li:last-child { border-bottom: none; }
+        .welcome-screen .info-list li::before { content: "✓"; color: #10b981; font-weight: bold; font-size: 18px; }
+
+        .question-screen h2 { color: #333; margin-bottom: 30px; font-size: 22px; line-height: 1.4; }
+        .answers { margin: 30px 0; }
+        .answer {
+            display: block; width: 100%; text-align: left; padding: 20px; margin-bottom: 15px;
+            border: 2px solid #e0e0e0; border-radius: 12px; background: white; cursor: pointer;
+            transition: all 0.3s ease; position: relative;
+        }
+        .answer:hover:not(.disabled) { border-color: #667eea; transform: translateX(5px); }
+        .answer.selected { border-color: #667eea; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); }
+        .answer.correct { border-color: #10b981; background: rgba(16, 185, 129, 0.1); animation: correctPulse 0.5s ease; }
+        .answer.incorrect { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); animation: shake 0.5s ease; }
+        .answer.disabled { cursor: not-allowed; pointer-events: none; }
+        @keyframes correctPulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .answer-label { font-weight: bold; color: #667eea; margin-right: 10px; }
+
+        .explanation {
+            margin-top: 30px; padding: 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 12px; border-left: 4px solid #667eea;
+            display: none; opacity: 0; transition: opacity 0.4s ease;
+        }
+        .explanation.show { display: block; opacity: 1; }
+        .explanation h3 { color: #667eea; margin-bottom: 10px; }
+
+        .result-screen { text-align: center; }
+        .result-screen h1 { color: #667eea; margin-bottom: 20px; font-size: 32px; }
+        .score {
+            font-size: 72px; font-weight: bold; margin: 30px 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .result-message {
+            font-size: 20px; line-height: 1.5; margin: 20px 0; padding: 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 12px;
+        }
+        .result-message.excellent { background: rgba(16, 185, 129, 0.1); color: #059669; }
+        .result-message.good { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+        .result-message.average { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        .result-message.poor { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+        
+        .review-tooltip {
+            margin-top: 20px; padding: 10px; font-size: 14px; color: #666;
+            background: #f3f4f6; border-radius: 8px; display: none;
+        }
+
+        #feedbackOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0, 0, 0, 0.5); z-index: 2000;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #feedbackOverlay.show { opacity: 1; }
+        #feedbackOverlay span {
+            padding: 30px 60px; font-size: 48px; font-weight: bold;
+            color: white; border-radius: 20px;
+            transform: scale(0.5); transition: transform 0.3s ease;
+        }
+        #feedbackOverlay.show span { transform: scale(1); }
+        .feedback-correct { background: rgba(16, 185, 129, 0.9); }
+        .feedback-incorrect { background: rgba(239, 68, 68, 0.9); }
+
+        /* ИСПРАВЛЕНИЕ: Стили для нового конфетти на canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3000;
+            pointer-events: none; /* Canvas не должен мешать кликам */
+            display: none; /* Скрыт по умолчанию */
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; padding-top: 120px; }
+            .card { padding: 25px; }
+            .header-content { flex-direction: column; gap: 10px; }
+            .progress-container { margin: 0; width: 100%; }
+            .timer { font-size: 18px; }
+            .question-indicators { justify-content: center; }
+        }
+    </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="ru"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Тест: Безопасность и подготовка рабочего пространства для криптоопераций&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* General Styles */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>* {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-sizing: border-box;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>body {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>min-height: 100vh;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #333;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.container {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>max-width: 800px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0 auto;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding-top: 100px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* Header &amp; Progress */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.header {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: fixed;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>top: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>left: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>right: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(255, 255, 255, 0.98);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>z-index: 1000;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 15px 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>backdrop-filter: blur(10px);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: none;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.header-content {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>max-width: 800px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0 auto;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.timer {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-weight: bold;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #667eea;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gap: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.timer.warning { color: #f59e0b; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.timer.danger { color: #ef4444; animation: pulse 1s infinite; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.progress-container { flex: 1; margin: 0 30px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.progress-label { font-size: 12px; color: #666; margin-bottom: 5px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.progress-bar { background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.progress-fill { background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 4px; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.question-indicators { display: flex; gap: 5px; margin-top: 8px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.question-dot {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 20px; height: 20px; border-radius: 50%; background: #e0e0e0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 10px; display: flex; align-items: center; justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #666; font-weight: bold; transition: all 0.3s ease;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.question-indicators.review-mode .question-dot { cursor: pointer; } /* Make dots clickable in review mode */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.question-dot.current { background: #667eea; color: white; transform: scale(1.2); }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.question-dot.correct { background: #10b981; color: white; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.question-dot.incorrect { background: #ef4444; color: white; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* Card &amp; Transitions */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: white;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 40px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transition: opacity 0.4s ease, transform 0.4s ease;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.card.fade-out {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>opacity: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transform: translateY(20px);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* Buttons */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: linear-gradient(135deg, #667eea, #764ba2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: white; border: none; padding: 15px 40px; border-radius: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 18px; font-weight: bold; cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transition: all 0.3s ease; display: inline-block; margin-top: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn:hover:not(:disabled) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transform: translateY(-2px);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn:disabled { opacity: 0.5; cursor: not-allowed; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn-secondary {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: white; color: #667eea; border: 2px solid #667eea; margin-left: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.btn-secondary:hover:not(:disabled) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #667eea; color: white;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* Screens */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.welcome-screen .welcome-subtitle {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-weight: 600;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #9ca3af; /* Gray color */</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 8px; /* Space between subtitle and title */</p>
-<p class="p1"><span class="Apple-converted-space">            </span>text-transform: uppercase;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.welcome-screen .welcome-title {<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #667eea;<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-bottom: 30px;<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 32px; /* Increased font size */</p>
-<p class="p1"><span class="Apple-converted-space">            </span>line-height: 1.3;<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.welcome-screen .info-list { list-style: none; margin: 30px 0; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.welcome-screen .info-list li { padding: 12px 0; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 10px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.welcome-screen .info-list li:last-child { border-bottom: none; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.welcome-screen .info-list li::before { content: "✓"; color: #10b981; font-weight: bold; font-size: 18px; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.question-screen h2 { color: #333; margin-bottom: 30px; font-size: 22px; line-height: 1.4; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.answers { margin: 30px 0; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.answer {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: block; width: 100%; text-align: left; padding: 20px; margin-bottom: 15px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 2px solid #e0e0e0; border-radius: 12px; background: white; cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transition: all 0.3s ease; position: relative;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.answer:hover:not(.disabled) { border-color: #667eea; transform: translateX(5px); }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.answer.selected { border-color: #667eea; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.answer.correct { border-color: #10b981; background: rgba(16, 185, 129, 0.1); animation: correctPulse 0.5s ease; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.answer.incorrect { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); animation: shake 0.5s ease; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.answer.disabled { cursor: not-allowed; pointer-events: none; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>@keyframes correctPulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.answer-label { font-weight: bold; color: #667eea; margin-right: 10px; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.explanation {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-top: 30px; padding: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 12px; border-left: 4px solid #667eea;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: none; opacity: 0; transition: opacity 0.4s ease;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.explanation.show { display: block; opacity: 1; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.explanation h3 { color: #667eea; margin-bottom: 10px; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.result-screen { text-align: center; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.result-screen h1 { color: #667eea; margin-bottom: 20px; font-size: 32px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.score {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 72px; font-weight: bold; margin: 30px 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: linear-gradient(135deg, #667eea, #764ba2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>-webkit-background-clip: text; -webkit-text-fill-color: transparent;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.result-message {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 20px; line-height: 1.5; margin: 20px 0; padding: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border-radius: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.result-message.excellent { background: rgba(16, 185, 129, 0.1); color: #059669; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.result-message.good { background: rgba(59, 130, 246, 0.1); color: #2563eb; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.result-message.average { background: rgba(245, 158, 11, 0.1); color: #d97706; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.result-message.poor { background: rgba(239, 68, 68, 0.1); color: #dc2626; }</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.review-tooltip {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin-top: 20px; padding: 10px; font-size: 14px; color: #666;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #f3f4f6; border-radius: 8px; display: none;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>#feedbackOverlay {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: fixed; top: 0; left: 0; width: 100%; height: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex; align-items: center; justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(0, 0, 0, 0.5); z-index: 2000;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>opacity: 0; pointer-events: none; transition: opacity 0.3s ease;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#feedbackOverlay.show { opacity: 1; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#feedbackOverlay span {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 30px 60px; font-size: 48px; font-weight: bold;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: white; border-radius: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transform: scale(0.5); transition: transform 0.3s ease;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#feedbackOverlay.show span { transform: scale(1); }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.feedback-correct { background: rgba(16, 185, 129, 0.9); }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.feedback-incorrect { background: rgba(239, 68, 68, 0.9); }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>/* ИСПРАВЛЕНИЕ: Стили для нового конфетти на canvas */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#confetti-canvas {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: fixed;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>top: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>left: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>z-index: 3000;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>pointer-events: none; /* Canvas не должен мешать кликам */</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: none; /* Скрыт по умолчанию */</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>@media (max-width: 600px) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>.container { padding: 15px; padding-top: 120px; }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>.card { padding: 25px; }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>.header-content { flex-direction: column; gap: 10px; }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>.progress-container { margin: 0; width: 100%; }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>.timer { font-size: 18px; }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>.question-indicators { justify-content: center; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- ИСПРАВЛЕНИЕ: Добавлен canvas для конфетти --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;canvas id="confetti-canvas"&gt;&lt;/canvas&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="feedbackOverlay"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;span id="feedbackText"&gt;&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="header" id="header"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="header-content"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="timer" id="timer"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;span&gt;⏱️&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;span id="timerText"&gt;10:00&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="progress-container"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="progress-label"&gt;Прогресс: &lt;span id="progressText"&gt;0/10&lt;/span&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="progress-bar"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div class="progress-fill" id="progressFill"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="question-indicators" id="questionIndicators"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="container"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="card" id="card"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="welcomeScreen" class="welcome-screen"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;h2 class="welcome-subtitle"&gt;Тест к первому уроку&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;h1 class="welcome-title"&gt;Безопасность и подготовка рабочего пространства для криптоопераций&lt;/h1&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;ul class="info-list"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;li&gt;Вас ждет тест из 10 вопросов&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;li&gt;Тест на время: вам дается 10 минут на прохождение теста&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;li&gt;Каждый вопрос в тесте включает 4 ответа&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;li&gt;В каждом вопросе может быть один или несколько правильных ответов&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;li&gt;За каждый верно решенный вопрос можно набрать 1 балл&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;li&gt;Всего можно набрать 10 баллов&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/ul&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button class="btn" onclick="startTest()"&gt;ВПЕРЕД!&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="questionScreen" class="question-screen" style="display: none;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;h2 id="questionText"&gt;&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="answers" id="answers"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="explanation" id="explanation"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;h3&gt;📚 Пояснение:&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;p id="explanationText"&gt;&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button class="btn" id="submitBtn" onclick="submitAnswer()" disabled&gt;Ответить&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button class="btn" id="nextBtn" onclick="nextQuestion()" style="display: none;"&gt;Следующий вопрос&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button class="btn" id="resultsBtn" onclick="showResults()" style="display: none;"&gt;Посмотреть результаты&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button class="btn btn-secondary" id="backToResultsBtn" onclick="showResults(false)" style="display: none;"&gt;К результатам&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="resultScreen" class="result-screen" style="display: none;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;h1&gt;Тест завершен!&lt;/h1&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="score" id="score"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="result-message" id="resultMessage"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button class="btn" onclick="restartTest()"&gt;Пройти заново&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;button class="btn btn-secondary" id="reviewBtn" onclick="toggleReviewTooltip()"&gt;Посмотреть мои ответы&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="review-tooltip" id="reviewTooltip"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>Для проверки своих ответов просто нажимайте на кружки с номерами вопросов вверху.</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const questions = [</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "Какие критические требования должны соблюдаться при работе с секретной eSIM?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"eSIM должна поддерживать только получение SMS и работать по всему миру",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Можно рассказать о ней только самым близким друзьям для экстренных случаев",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Необходимо пополнять баланс минимум один раз в год для поддержания активности",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"eSIM обязательно должна поддерживать голосовые вызовы для двухфакторной аутентификации"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [0, 2],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "Секретная eSIM - это фундамент вашей анонимной системы безопасности. Тариф 'ONLY SMS' минимизирует цифровой след и обеспечивает получение 2FA-кодов из любой точки мира без лишних функций. Критически важно соблюдать правило 'НИКОМУ НИКОГДА НЕ РАССКАЗЫВАЕМ' - даже самые близкие люди могут стать непреднамеренным вектором утечки. Регулярное пополнение раз в год предотвращает деактивацию номера оператором. Голосовые вызовы только увеличивают поверхность атаки и не требуются для 2FA."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "Какие действия ОБЯЗАТЕЛЬНЫ при настройке секретного смартфона для криптоопераций?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Выполнить сброс до заводских настроек и создать новый аккаунт, не связанный с личностью",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Установить социальные сети и мессенджеры для оперативной связи",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Удалить все лишние приложения и отключить облачную синхронизацию",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Использовать свой основной Google/Apple аккаунт для удобства"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [0, 2],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "При настройке секретного смартфона (iOS или Android) обязателен сброс до заводских настроек и создание нового аккаунта (Google или Apple ID), не связанного с вашей реальной личностью (ответ A - правильный). Критически важно удалить все лишние приложения и отключить любую облачную синхронизацию (ответ C - правильный) - это минимизирует цифровой след и векторы атаки. Установка соцсетей и мессенджеров (ответ B - неверный) категорически запрещена, так как они связывают устройство с реальной личностью. Использование основного аккаунта (ответ D - неверный) - критическая ошибка, мгновенно компрометирующая анонимность через экосистему Google/Apple."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "Какие действия являются обязательными при создании секретной почты?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Использовать генератор паролей для создания сложного пароля",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Привязать номер секретной eSIM для восстановления доступа",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Создавать почту только через VPN для анонимности",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Почта не должна содержать элементов, связанных с реальной личностью"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [0, 1, 3],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "Секретная почта требует комплексной защиты. Генератор паролей &lt;a href='https://www.onlinepasswordgenerator.ru' target='_blank' style='color: #667eea; font-weight: bold;'&gt;onlinepasswordgenerator.ru&lt;/a&gt; создает криптостойкие пароли. Привязка секретной eSIM обеспечивает изолированную систему восстановления. VPN при создании не указан как обязательное требование в инструкции - VPN нужен для работы с публичными WiFi. Критически важно исключить любые связи с реальной личностью в адресе и данных."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "Как правильно организовать работу с WiFi на секретных устройствах?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Секретный смартфон должен подключаться только к WiFi через hotspot с личного смартфона",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Можно подключаться к проверенным публичным WiFi через платный VPN",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Секретный ноутбук должен подключаться только к WiFi через hotspot с личного смартфона",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Домашний WiFi безопасен для всех устройств без ограничений"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [0, 2],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "Правило WiFi-безопасности абсолютно: ВСЕ секретные устройства (смартфон - ответ A правильный, ноутбук - ответ C правильный) подключаются ТОЛЬКО через hotspot с личного смартфона. Это создает контролируемый изолированный канал связи. Даже с VPN публичные WiFi недопустимы для секретных устройств (ответ B - неверный), так как представляют риск компрометации. Домашний WiFi также не используется (ответ D - неверный), поскольку может быть скомпрометирован или отслеживаться провайдером."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "Почему необходимо купить именно ТРИ флешки от РАЗНЫХ производителей?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Для хранения резервных копий и их географического распределения",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Для минимизации риска одновременного выхода из строя всех носителей",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Одна флешка может быть заражена вирусом с завода",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Для распределения рисков при хранении чувствительной информации"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [0, 1, 3],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "Три флешки от разных производителей - это продуманная стратегия риск-менеджмента. Разные производители используют разные контроллеры и чипы памяти, что минимизирует вероятность одновременного отказа. Резервные копии нужно хранить в разных местах (ответ A - правильный) для снижения риска физической потери. Это классическое распределение рисков - не хранить все критические данные в одном месте. Риск заводского вируса минимален при покупке в официальных магазинах."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "Какие действия ОБЯЗАТЕЛЬНЫ при настройке секретного ноутбука?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Подключить секретный ноутбук к публичному WiFi для ускорения настройки",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Установить платный VPN",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Создать локального пользователя со сложным уникальным паролем",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Установить антивирус"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [1, 2, 3],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "Настройка секретного ноутбука направлена на базовую изоляцию и защиту. Подключение к публичному WiFi категорически запрещено, так как это создаёт риск перехвата данных. Установка VPN необходима для защиты соединения в будущем. Создание локального пользователя со сложным уникальным паролем исключает несанкционированный доступ. Антивирус обеспечивает дополнительный уровень защиты от вредоносного ПО."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "На каких устройствах должен быть установлен Google Authenticator?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Только на секретном смартфоне",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"На секретном и личном смартфонах",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"На устройстве друга",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Только на личном смартфоне с включенной синхронизацией"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [1],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "Google Authenticator должен быть установлен именно на двух устройствах - секретном и личном смартфонах. Это обеспечивает резервирование доступа к 2FA-кодам (токенам) при проблемах с одним из устройств. Установка только на одном устройстве создает единую точку отказа. Установка на посторонних устройствах недопустима — другие люди могут получить доступ к вашим деньгам и чувствительным данным."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "Какие типы приложений устанавливаются на секретный смартфон?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Криптовалютные биржи",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Криптокошельки: Trust Wallet, SafePal и BlueWallet",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Telegram для быстрой коммуникации",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Google Authenticator для двухфакторной аутентификации"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [0, 1, 3],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "На секретный смартфон устанавливается строго определенный набор приложений для криптоопераций: приложения криптобирж, кошельки Trust Wallet, SafePal, BlueWallet, и Google Authenticator для 2FA. Критически важно: НИКАКИЕ мессенджеры включая Telegram не устанавливаются - это железное правило изоляции секретного устройства от коммуникационных каналов."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "Какой сервис рекомендуется использовать для проверки подозрительных ссылок?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"https://virustotal.com/gui/home/url",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Встроенный антивирус операционной системы",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Google Safe Browsing",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Bitdefender Scanner"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [0],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "В обучении явно показан единственный сервис для проверки ссылок - VirusTotal. Этот сервис агрегирует данные от десятков антивирусных движков и обеспечивает комплексную проверку URL. Встроенные антивирусы не специализируются на превентивной проверке ссылок. Google Safe Browsing хорош, но не упомянут в материалах. Bitdefender указан как антивирус для Mac, а не инструмент проверки URL."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>{</p>
-<p class="p1"><span class="Apple-converted-space">                </span>question: "Какие действия являются КРИТИЧЕСКИМИ нарушениями безопасности?",</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answers: [</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Рассказать близкому другу о существовании секретной почты 'на всякий случай'",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Использовать один пароль для секретной почты и криптобиржи",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Подключить секретный ноутбук к публичному WiFi в кафе даже с VPN",</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>"Хранить всю чувствительную информацию в одном зашифрованном файле на одной флешке"</p>
-<p class="p1"><span class="Apple-converted-space">                </span>],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>correct: [0, 1],</p>
-<p class="p1"><span class="Apple-converted-space">                </span>explanation: "Критические ошибки - это действия, мгновенно компрометирующие всю систему безопасности. Рассказ о секретной почте даже близкому другу нарушает фундаментальное правило 'НИКОМУ НИКОГДА' и создает неконтролируемый вектор утечки. Использование одного пароля означает, что взлом одного сервиса автоматически компрометирует все остальные. Подключение к публичному WiFi с VPN - нарушение протокола, но VPN обеспечивает базовую защиту. Хранение seed-фраз в одном зашифрованном файле - плохая практика, но шифрование существенно снижает риски."</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>let currentQuestion = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let score = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let selectedAnswers = [];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let answered = false;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let timeLeft = 600;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let timerInterval;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let questionResults = [];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let userAnswersHistory = [];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>let testFinished = false;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>const card = document.getElementById('card');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function switchScreen(hideId, showId) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const hideEl = document.getElementById(hideId);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const showEl = document.getElementById(showId);</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>card.classList.add('fade-out');</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>setTimeout(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (hideEl) hideEl.style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (showEl) showEl.style.display = 'block';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>card.classList.remove('fade-out');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, 400);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function startTest() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>switchScreen('welcomeScreen', 'questionScreen');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('header').style.display = 'block';</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>initializeQuestionIndicators();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>showQuestion();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>startTimer();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function initializeQuestionIndicators() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const container = document.getElementById('questionIndicators');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>container.innerHTML = '';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let i = 0; i &lt; questions.length; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const dot = document.createElement('div');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>dot.className = 'question-dot';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>dot.textContent = i + 1;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>dot.onclick = () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (testFinished) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>jumpToQuestion(i);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>};</p>
-<p class="p1"><span class="Apple-converted-space">                </span>container.appendChild(dot);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function updateQuestionIndicators() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const dots = document.querySelectorAll('.question-dot');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>dots.forEach((dot, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>dot.classList.remove('current');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (index === currentQuestion) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>dot.classList.add('current');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (questionResults[index] !== undefined) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>dot.classList.add(questionResults[index] ? 'correct' : 'incorrect');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function startTimer() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>timerInterval = setInterval(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>timeLeft--;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>updateTimer();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (timeLeft &lt;= 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>clearInterval(timerInterval);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>showResults();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, 1000);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function updateTimer() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const minutes = Math.floor(timeLeft / 60);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const seconds = timeLeft % 60;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const timerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('timerText').textContent = timerText;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const timerElement = document.getElementById('timer');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>timerElement.classList.toggle('danger', timeLeft &lt;= 60);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>timerElement.classList.toggle('warning', timeLeft &gt; 60 &amp;&amp; timeLeft &lt;= 180);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function showQuestion() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>card.classList.add('fade-out');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>setTimeout(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const q = questions[currentQuestion];</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('questionText').textContent = `Вопрос ${currentQuestion + 1}: ${q.question}`;</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>const answersContainer = document.getElementById('answers');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answersContainer.innerHTML = '';</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>q.answers.forEach((answer, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const answerDiv = document.createElement('div');</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>answerDiv.className = 'answer';</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>answerDiv.innerHTML = `&lt;span class="answer-label"&gt;${String.fromCharCode(65 + index)}&lt;/span&gt; ${answer}`;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>answerDiv.onclick = () =&gt; toggleAnswer(index);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>answersContainer.appendChild(answerDiv);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>});</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>selectedAnswers = [];</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answered = false;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('submitBtn').disabled = true;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('submitBtn').style.display = 'inline-block';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('nextBtn').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('resultsBtn').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('backToResultsBtn').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('explanation').classList.remove('show');</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>updateProgress();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>updateQuestionIndicators();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>card.classList.remove('fade-out');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, 400);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function toggleAnswer(index) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (answered) return;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const answerElements = document.querySelectorAll('.answer');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const pos = selectedAnswers.indexOf(index);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (pos !== -1) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>selectedAnswers.splice(pos, 1);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answerElements[index].classList.remove('selected');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>selectedAnswers.push(index);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answerElements[index].classList.add('selected');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('submitBtn').disabled = selectedAnswers.length === 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function submitAnswer() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>answered = true;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>userAnswersHistory[currentQuestion] = [...selectedAnswers];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const q = questions[currentQuestion];</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const isCorrect =<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>selectedAnswers.length === q.correct.length &amp;&amp;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>selectedAnswers.every(ans =&gt; q.correct.includes(ans)) &amp;&amp;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>q.correct.every(cor =&gt; selectedAnswers.includes(cor));</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (isCorrect) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>score++;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>questionResults[currentQuestion] = isCorrect;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>showFeedback(isCorrect);</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>setTimeout(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const answerElements = document.querySelectorAll('.answer');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answerElements.forEach((element, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>element.classList.add('disabled');</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>element.classList.remove('selected');</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (q.correct.includes(index)) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>element.classList.add('correct');</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>} else if (selectedAnswers.includes(index)) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>element.classList.add('incorrect');</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>});</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('explanationText').innerHTML = q.explanation;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('explanation').classList.add('show');</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>document.getElementById('submitBtn').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (currentQuestion &lt; questions.length - 1) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>document.getElementById('nextBtn').style.display = 'inline-block';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>clearInterval(timerInterval);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>document.getElementById('resultsBtn').style.display = 'inline-block';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>updateQuestionIndicators();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, 1000);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function showFeedback(isCorrect) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const overlay = document.getElementById('feedbackOverlay');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const text = document.getElementById('feedbackText');</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>text.textContent = isCorrect ? 'Верно!' : 'Неверно!';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>text.className = isCorrect ? 'feedback-correct' : 'feedback-incorrect';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>overlay.classList.add('show');</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>setTimeout(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>overlay.classList.remove('show');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, 1000);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function nextQuestion() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>currentQuestion++;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>showQuestion();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function updateProgress() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const progress = ((currentQuestion + 1) / questions.length) * 100;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('progressFill').style.width = progress + '%';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('progressText').textContent = `${currentQuestion + 1}/10`;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function showResults(runAnimation = true) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>testFinished = true;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>clearInterval(timerInterval);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>switchScreen('questionScreen', 'resultScreen');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('questionIndicators').classList.add('review-mode');</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const scoreEl = document.getElementById('score');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const messageElement = document.getElementById('resultMessage');</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if(runAnimation) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>let currentScore = 0;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const scoreAnimation = setInterval(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>scoreEl.textContent = `${currentScore}/10`;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (currentScore &gt;= score) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>clearInterval(scoreAnimation);</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>if (score === 10) launchConfetti();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>currentScore++;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}, 100);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>scoreEl.textContent = `${score}/10`;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>let message = ''; let className = '';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (score === 10) { message = '🎉 У вас отличное понимание безопасности!'; className = 'excellent'; }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>else if (score &gt;= 8) { message = '👍 У вас хорошее понимание, однако требуется доработка деталей.'; className = 'good'; }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>else if (score &gt;= 6) { message = '📚 Необходимо повторное изучение материала.'; className = 'average'; }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>else { message = '⚠️ Критически важно пройти урок заново!'; className = 'poor'; }</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>messageElement.textContent = message;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>messageElement.className = 'result-message ' + className;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function jumpToQuestion(index) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>currentQuestion = index;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>switchScreen('resultScreen', 'questionScreen');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>showQuestionForReview();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function showQuestionForReview() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const q = questions[currentQuestion];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const userAnswers = userAnswersHistory[currentQuestion] || [];</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('questionText').textContent = `Вопрос ${currentQuestion + 1}: ${q.question}`;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const answersContainer = document.getElementById('answers');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>answersContainer.innerHTML = '';</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>q.answers.forEach((answer, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const answerDiv = document.createElement('div');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answerDiv.className = 'answer disabled';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answerDiv.innerHTML = `&lt;span class="answer-label"&gt;${String.fromCharCode(65 + index)}&lt;/span&gt; ${answer}`;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (q.correct.includes(index)) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>answerDiv.classList.add('correct');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>} else if (userAnswers.includes(index)) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>answerDiv.classList.add('incorrect');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>answersContainer.appendChild(answerDiv);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('explanationText').innerHTML = q.explanation;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('explanation').classList.add('show');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('submitBtn').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('nextBtn').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('resultsBtn').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('backToResultsBtn').style.display = 'inline-block';</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>updateQuestionIndicators();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function toggleReviewTooltip() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const tooltip = document.getElementById('reviewTooltip');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// ИСПРАВЛЕНИЕ: Новая функция для конфетти на canvas</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function launchConfetti() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const canvas = document.getElementById('confetti-canvas');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const ctx = canvas.getContext('2d');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>canvas.style.display = 'block';</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>let width = window.innerWidth;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let height = window.innerHeight;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>canvas.width = width;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>canvas.height = height;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const particles = [];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const colors = ["#667eea", "#764ba2", "#f7b733", "#fc4a1a", "#ffffff"];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>class Particle {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>constructor(x, y) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.x = x;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.y = y;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.size = Math.random() * 7 + 3;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.speedX = Math.random() * 6 - 3;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.speedY = Math.random() * -15 - 5; // Shoot upwards</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.color = colors[Math.floor(Math.random() * colors.length)];</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.opacity = 1;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.spin = Math.random() * 10;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.gravity = 0.2;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>update() {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.speedY += this.gravity;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.x += this.speedX;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.y += this.speedY;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.opacity -= 0.01;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.spin += 0.1;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>draw() {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.save();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.globalAlpha = this.opacity;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.translate(this.x, this.y);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.rotate(this.spin);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillStyle = this.color;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size * 2);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.restore();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>function createParticles(x, y, count) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>for (let i = 0; i &lt; count; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>particles.push(new Particle(x, y));</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Создаем два "салюта" по краям</p>
-<p class="p1"><span class="Apple-converted-space">            </span>createParticles(width * 0.2, height, 100);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>createParticles(width * 0.8, height, 100);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>let animationFrameId;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>function animate() {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.clearRect(0, 0, width, height);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>for (let i = particles.length - 1; i &gt;= 0; i--) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const p = particles[i];</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>p.update();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>p.draw();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (p.opacity &lt;= 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>particles.splice(i, 1);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (particles.length &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>animationFrameId = requestAnimationFrame(animate);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Очистка после завершения анимации</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.clearRect(0, 0, width, height);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>canvas.style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>cancelAnimationFrame(animationFrameId);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>animate();</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Прячем канвас через 5 секунд в любом случае</p>
-<p class="p1"><span class="Apple-converted-space">            </span>setTimeout(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                 </span>if(animationFrameId) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>cancelAnimationFrame(animationFrameId);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>canvas.style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">                 </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, 5000);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function restartTest() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const canvas = document.getElementById('confetti-canvas');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>canvas.style.display = 'none'; // Убедимся, что канвас скрыт</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>currentQuestion = 0; score = 0; selectedAnswers = []; answered = false;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>timeLeft = 600; questionResults = []; userAnswersHistory = []; testFinished = false;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>switchScreen('resultScreen', 'welcomeScreen');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('header').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('timer').classList.remove('warning', 'danger');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('questionIndicators').classList.remove('review-mode');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+    <!-- ИСПРАВЛЕНИЕ: Добавлен canvas для конфетти -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div id="feedbackOverlay">
+        <span id="feedbackText"></span>
+    </div>
+
+    <div class="header" id="header">
+        <div class="header-content">
+            <div class="timer" id="timer">
+                <span>⏱️</span>
+                <span id="timerText">10:00</span>
+            </div>
+            <div class="progress-container">
+                <div class="progress-label">Прогресс: <span id="progressText">0/10</span></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="question-indicators" id="questionIndicators"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card" id="card">
+            <div id="welcomeScreen" class="welcome-screen">
+                <h2 class="welcome-subtitle">Тест к первому уроку</h2>
+                <h1 class="welcome-title">Безопасность и подготовка рабочего пространства для криптоопераций</h1>
+                <ul class="info-list">
+                    <li>Вас ждет тест из 10 вопросов</li>
+                    <li>Тест на время: вам дается 10 минут на прохождение теста</li>
+                    <li>Каждый вопрос в тесте включает 4 ответа</li>
+                    <li>В каждом вопросе может быть один или несколько правильных ответов</li>
+                    <li>За каждый верно решенный вопрос можно набрать 1 балл</li>
+                    <li>Всего можно набрать 10 баллов</li>
+                </ul>
+                <button class="btn" onclick="startTest()">ВПЕРЕД!</button>
+            </div>
+
+            <div id="questionScreen" class="question-screen" style="display: none;">
+                <h2 id="questionText"></h2>
+                <div class="answers" id="answers"></div>
+                <div class="explanation" id="explanation">
+                    <h3>📚 Пояснение:</h3>
+                    <p id="explanationText"></p>
+                </div>
+                <button class="btn" id="submitBtn" onclick="submitAnswer()" disabled>Ответить</button>
+                <button class="btn" id="nextBtn" onclick="nextQuestion()" style="display: none;">Следующий вопрос</button>
+                <button class="btn" id="resultsBtn" onclick="showResults()" style="display: none;">Посмотреть результаты</button>
+                <button class="btn btn-secondary" id="backToResultsBtn" onclick="showResults(false)" style="display: none;">К результатам</button>
+            </div>
+
+            <div id="resultScreen" class="result-screen" style="display: none;">
+                <h1>Тест завершен!</h1>
+                <div class="score" id="score"></div>
+                <div class="result-message" id="resultMessage"></div>
+                <button class="btn" onclick="restartTest()">Пройти заново</button>
+                <button class="btn btn-secondary" id="reviewBtn" onclick="toggleReviewTooltip()">Посмотреть мои ответы</button>
+                <div class="review-tooltip" id="reviewTooltip">
+                    Для проверки своих ответов просто нажимайте на кружки с номерами вопросов вверху.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "Какие критические требования должны соблюдаться при работе с секретной eSIM?",
+                answers: [
+                    "eSIM должна поддерживать только получение SMS и работать по всему миру",
+                    "Можно рассказать о ней только самым близким друзьям для экстренных случаев",
+                    "Необходимо пополнять баланс минимум один раз в год для поддержания активности",
+                    "eSIM обязательно должна поддерживать голосовые вызовы для двухфакторной аутентификации"
+                ],
+                correct: [0, 2],
+                explanation: "Секретная eSIM - это фундамент вашей анонимной системы безопасности. Тариф 'ONLY SMS' минимизирует цифровой след и обеспечивает получение 2FA-кодов из любой точки мира без лишних функций. Критически важно соблюдать правило 'НИКОМУ НИКОГДА НЕ РАССКАЗЫВАЕМ' - даже самые близкие люди могут стать непреднамеренным вектором утечки. Регулярное пополнение раз в год предотвращает деактивацию номера оператором. Голосовые вызовы только увеличивают поверхность атаки и не требуются для 2FA."
+            },
+            {
+                question: "Какие действия ОБЯЗАТЕЛЬНЫ при настройке секретного смартфона для криптоопераций?",
+                answers: [
+                    "Выполнить сброс до заводских настроек и создать новый аккаунт, не связанный с личностью",
+                    "Установить социальные сети и мессенджеры для оперативной связи",
+                    "Удалить все лишние приложения и отключить облачную синхронизацию",
+                    "Использовать свой основной Google/Apple аккаунт для удобства"
+                ],
+                correct: [0, 2],
+                explanation: "При настройке секретного смартфона (iOS или Android) обязателен сброс до заводских настроек и создание нового аккаунта (Google или Apple ID), не связанного с вашей реальной личностью (ответ A - правильный). Критически важно удалить все лишние приложения и отключить любую облачную синхронизацию (ответ C - правильный) - это минимизирует цифровой след и векторы атаки. Установка соцсетей и мессенджеров (ответ B - неверный) категорически запрещена, так как они связывают устройство с реальной личностью. Использование основного аккаунта (ответ D - неверный) - критическая ошибка, мгновенно компрометирующая анонимность через экосистему Google/Apple."
+            },
+            {
+                question: "Какие действия являются обязательными при создании секретной почты?",
+                answers: [
+                    "Использовать генератор паролей для создания сложного пароля",
+                    "Привязать номер секретной eSIM для восстановления доступа",
+                    "Создавать почту только через VPN для анонимности",
+                    "Почта не должна содержать элементов, связанных с реальной личностью"
+                ],
+                correct: [0, 1, 3],
+                explanation: "Секретная почта требует комплексной защиты. Генератор паролей <a href='https://www.onlinepasswordgenerator.ru' target='_blank' style='color: #667eea; font-weight: bold;'>onlinepasswordgenerator.ru</a> создает криптостойкие пароли. Привязка секретной eSIM обеспечивает изолированную систему восстановления. VPN при создании не указан как обязательное требование в инструкции - VPN нужен для работы с публичными WiFi. Критически важно исключить любые связи с реальной личностью в адресе и данных."
+            },
+            {
+                question: "Как правильно организовать работу с WiFi на секретных устройствах?",
+                answers: [
+                    "Секретный смартфон должен подключаться только к WiFi через hotspot с личного смартфона",
+                    "Можно подключаться к проверенным публичным WiFi через платный VPN",
+                    "Секретный ноутбук должен подключаться только к WiFi через hotspot с личного смартфона",
+                    "Домашний WiFi безопасен для всех устройств без ограничений"
+                ],
+                correct: [0, 2],
+                explanation: "Правило WiFi-безопасности абсолютно: ВСЕ секретные устройства (смартфон - ответ A правильный, ноутбук - ответ C правильный) подключаются ТОЛЬКО через hotspot с личного смартфона. Это создает контролируемый изолированный канал связи. Даже с VPN публичные WiFi недопустимы для секретных устройств (ответ B - неверный), так как представляют риск компрометации. Домашний WiFi также не используется (ответ D - неверный), поскольку может быть скомпрометирован или отслеживаться провайдером."
+            },
+            {
+                question: "Почему необходимо купить именно ТРИ флешки от РАЗНЫХ производителей?",
+                answers: [
+                    "Для хранения резервных копий и их географического распределения",
+                    "Для минимизации риска одновременного выхода из строя всех носителей",
+                    "Одна флешка может быть заражена вирусом с завода",
+                    "Для распределения рисков при хранении чувствительной информации"
+                ],
+                correct: [0, 1, 3],
+                explanation: "Три флешки от разных производителей - это продуманная стратегия риск-менеджмента. Разные производители используют разные контроллеры и чипы памяти, что минимизирует вероятность одновременного отказа. Резервные копии нужно хранить в разных местах (ответ A - правильный) для снижения риска физической потери. Это классическое распределение рисков - не хранить все критические данные в одном месте. Риск заводского вируса минимален при покупке в официальных магазинах."
+            },
+            {
+                question: "Какие действия ОБЯЗАТЕЛЬНЫ при настройке секретного ноутбука?",
+                answers: [
+                    "Подключить секретный ноутбук к публичному WiFi для ускорения настройки",
+                    "Установить платный VPN",
+                    "Создать локального пользователя со сложным уникальным паролем",
+                    "Установить антивирус"
+                ],
+                correct: [1, 2, 3],
+                explanation: "Настройка секретного ноутбука направлена на базовую изоляцию и защиту. Подключение к публичному WiFi категорически запрещено, так как это создаёт риск перехвата данных. Установка VPN необходима для защиты соединения в будущем. Создание локального пользователя со сложным уникальным паролем исключает несанкционированный доступ. Антивирус обеспечивает дополнительный уровень защиты от вредоносного ПО."
+            },
+            {
+                question: "На каких устройствах должен быть установлен Google Authenticator?",
+                answers: [
+                    "Только на секретном смартфоне",
+                    "На секретном и личном смартфонах",
+                    "На устройстве друга",
+                    "Только на личном смартфоне с включенной синхронизацией"
+                ],
+                correct: [1],
+                explanation: "Google Authenticator должен быть установлен именно на двух устройствах - секретном и личном смартфонах. Это обеспечивает резервирование доступа к 2FA-кодам (токенам) при проблемах с одним из устройств. Установка только на одном устройстве создает единую точку отказа. Установка на посторонних устройствах недопустима — другие люди могут получить доступ к вашим деньгам и чувствительным данным."
+            },
+            {
+                question: "Какие типы приложений устанавливаются на секретный смартфон?",
+                answers: [
+                    "Криптовалютные биржи",
+                    "Криптокошельки: Trust Wallet, SafePal и BlueWallet",
+                    "Telegram для быстрой коммуникации",
+                    "Google Authenticator для двухфакторной аутентификации"
+                ],
+                correct: [0, 1, 3],
+                explanation: "На секретный смартфон устанавливается строго определенный набор приложений для криптоопераций: приложения криптобирж, кошельки Trust Wallet, SafePal, BlueWallet, и Google Authenticator для 2FA. Критически важно: НИКАКИЕ мессенджеры включая Telegram не устанавливаются - это железное правило изоляции секретного устройства от коммуникационных каналов."
+            },
+            {
+                question: "Какой сервис рекомендуется использовать для проверки подозрительных ссылок?",
+                answers: [
+                    "https://virustotal.com/gui/home/url",
+                    "Встроенный антивирус операционной системы",
+                    "Google Safe Browsing",
+                    "Bitdefender Scanner"
+                ],
+                correct: [0],
+                explanation: "В обучении явно показан единственный сервис для проверки ссылок - VirusTotal. Этот сервис агрегирует данные от десятков антивирусных движков и обеспечивает комплексную проверку URL. Встроенные антивирусы не специализируются на превентивной проверке ссылок. Google Safe Browsing хорош, но не упомянут в материалах. Bitdefender указан как антивирус для Mac, а не инструмент проверки URL."
+            },
+            {
+                question: "Какие действия являются КРИТИЧЕСКИМИ нарушениями безопасности?",
+                answers: [
+                    "Рассказать близкому другу о существовании секретной почты 'на всякий случай'",
+                    "Использовать один пароль для секретной почты и криптобиржи",
+                    "Подключить секретный ноутбук к публичному WiFi в кафе даже с VPN",
+                    "Хранить всю чувствительную информацию в одном зашифрованном файле на одной флешке"
+                ],
+                correct: [0, 1],
+                explanation: "Критические ошибки - это действия, мгновенно компрометирующие всю систему безопасности. Рассказ о секретной почте даже близкому другу нарушает фундаментальное правило 'НИКОМУ НИКОГДА' и создает неконтролируемый вектор утечки. Использование одного пароля означает, что взлом одного сервиса автоматически компрометирует все остальные. Подключение к публичному WiFi с VPN - нарушение протокола, но VPN обеспечивает базовую защиту. Хранение seed-фраз в одном зашифрованном файле - плохая практика, но шифрование существенно снижает риски."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let selectedAnswers = [];
+        let answered = false;
+        let timeLeft = 600;
+        let timerInterval;
+        let questionResults = [];
+        let userAnswersHistory = [];
+        let testFinished = false;
+
+        const card = document.getElementById('card');
+
+        function switchScreen(hideId, showId) {
+            const hideEl = document.getElementById(hideId);
+            const showEl = document.getElementById(showId);
+            
+            card.classList.add('fade-out');
+            
+            setTimeout(() => {
+                if (hideEl) hideEl.style.display = 'none';
+                if (showEl) showEl.style.display = 'block';
+                card.classList.remove('fade-out');
+            }, 400);
+        }
+
+        function startTest() {
+            switchScreen('welcomeScreen', 'questionScreen');
+            document.getElementById('header').style.display = 'block';
+            
+            initializeQuestionIndicators();
+            showQuestion();
+            startTimer();
+        }
+
+        function initializeQuestionIndicators() {
+            const container = document.getElementById('questionIndicators');
+            container.innerHTML = '';
+            for (let i = 0; i < questions.length; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'question-dot';
+                dot.textContent = i + 1;
+                dot.onclick = () => {
+                    if (testFinished) {
+                        jumpToQuestion(i);
+                    }
+                };
+                container.appendChild(dot);
+            }
+        }
+
+        function updateQuestionIndicators() {
+            const dots = document.querySelectorAll('.question-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.remove('current');
+                if (index === currentQuestion) {
+                    dot.classList.add('current');
+                }
+                if (questionResults[index] !== undefined) {
+                    dot.classList.add(questionResults[index] ? 'correct' : 'incorrect');
+                }
+            });
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    showResults();
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timerText = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timerText').textContent = timerText;
+            const timerElement = document.getElementById('timer');
+            timerElement.classList.toggle('danger', timeLeft <= 60);
+            timerElement.classList.toggle('warning', timeLeft > 60 && timeLeft <= 180);
+        }
+
+        function showQuestion() {
+            card.classList.add('fade-out');
+            setTimeout(() => {
+                const q = questions[currentQuestion];
+                document.getElementById('questionText').textContent = `Вопрос ${currentQuestion + 1}: ${q.question}`;
+                
+                const answersContainer = document.getElementById('answers');
+                answersContainer.innerHTML = '';
+                
+                q.answers.forEach((answer, index) => {
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'answer';
+                    answerDiv.innerHTML = `<span class="answer-label">${String.fromCharCode(65 + index)}</span> ${answer}`;
+                    answerDiv.onclick = () => toggleAnswer(index);
+                    answersContainer.appendChild(answerDiv);
+                });
+                
+                selectedAnswers = [];
+                answered = false;
+                document.getElementById('submitBtn').disabled = true;
+                document.getElementById('submitBtn').style.display = 'inline-block';
+                document.getElementById('nextBtn').style.display = 'none';
+                document.getElementById('resultsBtn').style.display = 'none';
+                document.getElementById('backToResultsBtn').style.display = 'none';
+                document.getElementById('explanation').classList.remove('show');
+                
+                updateProgress();
+                updateQuestionIndicators();
+                card.classList.remove('fade-out');
+            }, 400);
+        }
+
+        function toggleAnswer(index) {
+            if (answered) return;
+            const answerElements = document.querySelectorAll('.answer');
+            const pos = selectedAnswers.indexOf(index);
+            if (pos !== -1) {
+                selectedAnswers.splice(pos, 1);
+                answerElements[index].classList.remove('selected');
+            } else {
+                selectedAnswers.push(index);
+                answerElements[index].classList.add('selected');
+            }
+            document.getElementById('submitBtn').disabled = selectedAnswers.length === 0;
+        }
+
+        function submitAnswer() {
+            answered = true;
+            userAnswersHistory[currentQuestion] = [...selectedAnswers];
+            const q = questions[currentQuestion];
+            
+            const isCorrect = 
+                selectedAnswers.length === q.correct.length &&
+                selectedAnswers.every(ans => q.correct.includes(ans)) &&
+                q.correct.every(cor => selectedAnswers.includes(cor));
+            
+            if (isCorrect) {
+                score++;
+            }
+            
+            questionResults[currentQuestion] = isCorrect;
+            
+            showFeedback(isCorrect);
+            
+            setTimeout(() => {
+                const answerElements = document.querySelectorAll('.answer');
+                answerElements.forEach((element, index) => {
+                    element.classList.add('disabled');
+                    element.classList.remove('selected');
+                    if (q.correct.includes(index)) {
+                        element.classList.add('correct');
+                    } else if (selectedAnswers.includes(index)) {
+                        element.classList.add('incorrect');
+                    }
+                });
+                
+                document.getElementById('explanationText').innerHTML = q.explanation;
+                document.getElementById('explanation').classList.add('show');
+                
+                document.getElementById('submitBtn').style.display = 'none';
+                if (currentQuestion < questions.length - 1) {
+                    document.getElementById('nextBtn').style.display = 'inline-block';
+                } else {
+                    clearInterval(timerInterval);
+                    document.getElementById('resultsBtn').style.display = 'inline-block';
+                }
+                updateQuestionIndicators();
+            }, 1000);
+        }
+
+        function showFeedback(isCorrect) {
+            const overlay = document.getElementById('feedbackOverlay');
+            const text = document.getElementById('feedbackText');
+            
+            text.textContent = isCorrect ? 'Верно!' : 'Неверно!';
+            text.className = isCorrect ? 'feedback-correct' : 'feedback-incorrect';
+            overlay.classList.add('show');
+            
+            setTimeout(() => {
+                overlay.classList.remove('show');
+            }, 1000);
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            showQuestion();
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `${currentQuestion + 1}/10`;
+        }
+
+        function showResults(runAnimation = true) {
+            testFinished = true;
+            clearInterval(timerInterval);
+            switchScreen('questionScreen', 'resultScreen');
+            document.getElementById('questionIndicators').classList.add('review-mode');
+            
+            const scoreEl = document.getElementById('score');
+            const messageElement = document.getElementById('resultMessage');
+            
+            if(runAnimation) {
+                let currentScore = 0;
+                const scoreAnimation = setInterval(() => {
+                    scoreEl.textContent = `${currentScore}/10`;
+                    if (currentScore >= score) {
+                        clearInterval(scoreAnimation);
+                        if (score === 10) launchConfetti();
+                    }
+                    currentScore++;
+                }, 100);
+            } else {
+                scoreEl.textContent = `${score}/10`;
+            }
+            
+            let message = ''; let className = '';
+            if (score === 10) { message = '🎉 У вас отличное понимание безопасности!'; className = 'excellent'; }
+            else if (score >= 8) { message = '👍 У вас хорошее понимание, однако требуется доработка деталей.'; className = 'good'; }
+            else if (score >= 6) { message = '📚 Необходимо повторное изучение материала.'; className = 'average'; }
+            else { message = '⚠️ Критически важно пройти урок заново!'; className = 'poor'; }
+            
+            messageElement.textContent = message;
+            messageElement.className = 'result-message ' + className;
+        }
+
+        function jumpToQuestion(index) {
+            currentQuestion = index;
+            switchScreen('resultScreen', 'questionScreen');
+            showQuestionForReview();
+        }
+
+        function showQuestionForReview() {
+            const q = questions[currentQuestion];
+            const userAnswers = userAnswersHistory[currentQuestion] || [];
+            
+            document.getElementById('questionText').textContent = `Вопрос ${currentQuestion + 1}: ${q.question}`;
+            const answersContainer = document.getElementById('answers');
+            answersContainer.innerHTML = '';
+
+            q.answers.forEach((answer, index) => {
+                const answerDiv = document.createElement('div');
+                answerDiv.className = 'answer disabled';
+                answerDiv.innerHTML = `<span class="answer-label">${String.fromCharCode(65 + index)}</span> ${answer}`;
+                if (q.correct.includes(index)) {
+                    answerDiv.classList.add('correct');
+                } else if (userAnswers.includes(index)) {
+                    answerDiv.classList.add('incorrect');
+                }
+                answersContainer.appendChild(answerDiv);
+            });
+
+            document.getElementById('explanationText').innerHTML = q.explanation;
+            document.getElementById('explanation').classList.add('show');
+
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('resultsBtn').style.display = 'none';
+            document.getElementById('backToResultsBtn').style.display = 'inline-block';
+            
+            updateQuestionIndicators();
+        }
+        
+        function toggleReviewTooltip() {
+            const tooltip = document.getElementById('reviewTooltip');
+            tooltip.style.display = tooltip.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // ИСПРАВЛЕНИЕ: Новая функция для конфетти на canvas
+        function launchConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.style.display = 'block';
+
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            const particles = [];
+            const colors = ["#667eea", "#764ba2", "#f7b733", "#fc4a1a", "#ffffff"];
+
+            class Particle {
+                constructor(x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.size = Math.random() * 7 + 3;
+                    this.speedX = Math.random() * 6 - 3;
+                    this.speedY = Math.random() * -15 - 5; // Shoot upwards
+                    this.color = colors[Math.floor(Math.random() * colors.length)];
+                    this.opacity = 1;
+                    this.spin = Math.random() * 10;
+                    this.gravity = 0.2;
+                }
+                update() {
+                    this.speedY += this.gravity;
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    this.opacity -= 0.01;
+                    this.spin += 0.1;
+                }
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.opacity;
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.spin);
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size * 2);
+                    ctx.restore();
+                }
+            }
+
+            function createParticles(x, y, count) {
+                for (let i = 0; i < count; i++) {
+                    particles.push(new Particle(x, y));
+                }
+            }
+
+            // Создаем два "салюта" по краям
+            createParticles(width * 0.2, height, 100);
+            createParticles(width * 0.8, height, 100);
+
+            let animationFrameId;
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.update();
+                    p.draw();
+                    if (p.opacity <= 0) {
+                        particles.splice(i, 1);
+                    }
+                }
+                if (particles.length > 0) {
+                    animationFrameId = requestAnimationFrame(animate);
+                } else {
+                    // Очистка после завершения анимации
+                    ctx.clearRect(0, 0, width, height);
+                    canvas.style.display = 'none';
+                    cancelAnimationFrame(animationFrameId);
+                }
+            }
+            
+            animate();
+            
+            // Прячем канвас через 5 секунд в любом случае
+            setTimeout(() => {
+                 if(animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    canvas.style.display = 'none';
+                 }
+            }, 5000);
+        }
+
+        function restartTest() {
+            const canvas = document.getElementById('confetti-canvas');
+            canvas.style.display = 'none'; // Убедимся, что канвас скрыт
+
+            currentQuestion = 0; score = 0; selectedAnswers = []; answered = false;
+            timeLeft = 600; questionResults = []; userAnswersHistory = []; testFinished = false;
+            
+            switchScreen('resultScreen', 'welcomeScreen');
+            document.getElementById('header').style.display = 'none';
+            document.getElementById('timer').classList.remove('warning', 'danger');
+            document.getElementById('questionIndicators').classList.remove('review-mode');
+        }
+    </script>
 </body>
 </html>
